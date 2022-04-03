@@ -1,5 +1,7 @@
 # QuickJS Windows Build
 
+(modified the makefile a bit so it actually works on my system, check the original repo out instead nya)
+
 Build [QuickJS](https://bellard.org/quickjs/) on Windows, and [prebuilt binary releases](https://github.com/mengmo/QuickJS-Windows-Build/releases).
 
 *Since all the modifications only affect build behaviors on Windows, you can also use this repository on Linux.*
