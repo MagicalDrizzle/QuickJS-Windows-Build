@@ -22,6 +22,9 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
+# don't build tests (fail on my system and i'm not smart enough to figure that out)
+CONFIG_NOTEST=y	#y or n, don't leave empty (leaving it empty is probably fine (anything not 'y' is no) but it's good practice i think)
+
 ifeq ($(shell uname -s),Darwin)
 CONFIG_DARWIN=y
 else ifeq (MINGW32,$(findstring MINGW32,$(shell uname -s)))
@@ -39,14 +42,12 @@ CONFIG_LTO=y
 # force 32 bit build for some utilities
 #CONFIG_M32=y
 
-ifdef CONFIG_DARWIN
 # use clang instead of gcc
 CONFIG_CLANG=y
 CONFIG_DEFAULT_AR=y
-endif
 
 # installation directory
-prefix=/usr/local
+prefix=/clang64/local
 
 # use the gprof profiler
 #CONFIG_PROFILE=y
@@ -61,7 +62,7 @@ ifdef CONFIG_WIN32
   ifdef CONFIG_M32
     CROSS_PREFIX=i686-w64-mingw32-
   else
-    CROSS_PREFIX=x86_64-w64-mingw32-
+    CROSS_PREFIX=
   endif
   EXE=.exe
 else
@@ -100,7 +101,7 @@ else
     AR=$(CROSS_PREFIX)ar
   endif
 endif
-STRIP=$(CROSS_PREFIX)strip
+STRIP=strip
 ifdef CONFIG_WERROR
 CFLAGS+=-Werror
 endif
@@ -160,6 +161,10 @@ ifdef CONFIG_LTO
 PROGS+=libquickjs.lto.a
 endif
 
+# my machine sucks
+ifeq ($(CONFIG_NOTEST),y)
+PROG-=examples/hello examples/hello_module examples/test_fib run-test262
+
 # examples
 ifeq ($(CROSS_PREFIX),)
 ifdef CONFIG_ASAN
@@ -174,6 +179,9 @@ endif
 
 all: $(OBJDIR) $(OBJDIR)/quickjs.check.o $(OBJDIR)/qjs.check.o $(PROGS)
 
+# don't build tests
+almostall: $(OBJDIR) $(OBJDIR)/quickjs.check.o $(OBJDIR)/qjs.check.o $(PROGS1)
+
 QJS_LIB_OBJS=$(OBJDIR)/quickjs.o $(OBJDIR)/libregexp.o $(OBJDIR)/libunicode.o $(OBJDIR)/cutils.o $(OBJDIR)/quickjs-libc.o
 
 QJS_OBJS=$(OBJDIR)/qjs.o $(OBJDIR)/repl.o $(QJS_LIB_OBJS)
@@ -182,11 +190,8 @@ QJS_LIB_OBJS+=$(OBJDIR)/libbf.o
 QJS_OBJS+=$(OBJDIR)/qjscalc.o
 endif
 
-HOST_LIBS=-lm -ldl -lpthread
-LIBS=-lm
-ifndef CONFIG_WIN32
-LIBS+=-ldl -lpthread
-endif
+HOST_LIBS=-lm -lpthread
+LIBS=-lm -lpthread
 LIBS+=$(EXTRA_LIBS)
 
 $(OBJDIR):
@@ -307,7 +312,7 @@ clean:
 
 install: all
 	mkdir -p "$(DESTDIR)$(prefix)/bin"
-	$(STRIP) qjs qjsc
+	$(STRIP) qjs.exe qjsc.exe
 	install -m755 qjs qjsc "$(DESTDIR)$(prefix)/bin"
 	ln -sf qjs "$(DESTDIR)$(prefix)/bin/qjscalc"
 	mkdir -p "$(DESTDIR)$(prefix)/lib/quickjs"
